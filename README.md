@@ -16,3 +16,4 @@ Instructions:
 We plan to build a personal finance and budgeting application designed specifically to help college students track their spending, manage budgets, and make better day-to-day financial decisions. We are unsure how we are going to split tasks up so we don't run into a lot of git conflicts during development.
 
 
+Currently: Convex backend demo is up and running with vite app.
