@@ -19,3 +19,10 @@ We plan to build a personal finance and budgeting application designed specifica
 Currently: Convex backend demo is up and running with vite app.
 
 AI was used in the generation of code. 
+
+
+
+Nathan: runs on mac
+Graham: runs on mac
+Krish: runs on windows
+Momrez: runs on windows
