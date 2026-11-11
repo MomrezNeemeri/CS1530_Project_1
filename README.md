@@ -4,7 +4,7 @@ MoMoneyMoProblems
 
 Tech stack: TypeScript, React + Vite + TypeScript, Convex, Claude/Gemini, AWS Bedrock, Convex Auth, Vercel (frontend), Convex Cloud
 
-Architecture: See ArchitectureFigs folder
+Architecture: See architecture figs folder
 
 Pre reqs: Node.js 20.19+ or 22.12+.
 
