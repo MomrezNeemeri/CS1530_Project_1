@@ -9,6 +9,8 @@
  */
 
 import type * as expenses from "../expenses.js";
+import type * as incomeFrequency from "../incomeFrequency.js";
+import type * as incomeStreams from "../incomeStreams.js";
 import type * as myFunctions from "../myFunctions.js";
 
 import type {
@@ -19,6 +21,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   expenses: typeof expenses;
+  incomeFrequency: typeof incomeFrequency;
+  incomeStreams: typeof incomeStreams;
   myFunctions: typeof myFunctions;
 }>;
 
