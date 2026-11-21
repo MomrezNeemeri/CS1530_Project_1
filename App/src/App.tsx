@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { FormEvent, useState } from "react";
 import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 import { errorMessage } from "./errors";
 import { IncomeSection } from "./Income";
 import {
@@ -226,7 +227,7 @@ function ExpenseList({
 }: {
   expenses:
     | {
-        _id: string;
+        _id: Id<"expenses">;
         amountCents: number;
         category: string;
         date: string;
@@ -235,9 +236,36 @@ function ExpenseList({
     | undefined;
   loading: boolean;
 }) {
+  const deleteExpense = useMutation(api.expenses.deleteExpense);
+  const [deletingId, setDeletingId] = useState<Id<"expenses"> | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function onDelete(expense: NonNullable<typeof expenses>[number]) {
+    if (deletingId !== null || !window.confirm(
+      `Delete ${expense.category} expense of ${formatCents(expense.amountCents)} on ${formatIsoDate(expense.date)}?`,
+    )) {
+      return;
+    }
+
+    setDeletingId(expense._id);
+    setDeleteError(null);
+    try {
+      await deleteExpense({ expenseId: expense._id });
+    } catch (caught) {
+      setDeleteError(errorMessage(caught, "Could not delete the expense."));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-xl font-bold">Expenses</h2>
+      {deleteError ? (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {deleteError}
+        </p>
+      ) : null}
       {loading ? <p>Loading expenses…</p> : null}
       {!loading && expenses?.length === 0 ? (
         <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -257,7 +285,17 @@ function ExpenseList({
                 {expense.location ? ` · ${expense.location}` : ""}
               </p>
             </div>
-            <p className="font-bold">{formatCents(expense.amountCents)}</p>
+            <div className="flex flex-col items-end gap-2">
+              <p className="font-bold">{formatCents(expense.amountCents)}</p>
+              <button
+                type="button"
+                disabled={deletingId !== null}
+                className="bg-dark dark:bg-light text-light dark:text-dark text-sm px-4 py-2 rounded-md border-2 disabled:opacity-60"
+                onClick={() => { void onDelete(expense); }}
+              >
+                {deletingId === expense._id ? "Deleting…" : "Delete"}
+              </button>
+            </div>
           </li>
         ))}
       </ul>
