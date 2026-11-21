@@ -128,6 +128,12 @@ export function validateExpenseInput(input: {
     location: location.length > 0 ? location : null,
   };
 }
+export const deleteExpense = mutation({
+  args: { expenseId: v.id("expenses") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete("expenses", args.expenseId);
+  },
+});
 
 export const addExpense = mutation({
   args: {
