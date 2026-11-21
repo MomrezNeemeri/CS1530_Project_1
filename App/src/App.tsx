@@ -1,7 +1,8 @@
-import { ConvexError } from "convex/values";
 import { useMutation, useQuery } from "convex/react";
 import { FormEvent, useState } from "react";
 import { api } from "../convex/_generated/api";
+import { errorMessage } from "./errors";
+import { IncomeSection } from "./Income";
 import {
   EXPENSE_CATEGORIES,
   currentMonth,
@@ -73,6 +74,7 @@ export default function App() {
           expenses={summary?.expenses}
           loading={summary === undefined}
         />
+        <IncomeSection />
       </main>
     </>
   );
@@ -137,7 +139,7 @@ function AddExpenseForm() {
       setDate(todayLocal());
       setLocation("");
     } catch (caught) {
-      setError(errorMessage(caught));
+      setError(errorMessage(caught, "Could not save the expense."));
     } finally {
       setSaving(false);
     }
@@ -277,16 +279,4 @@ function ExpenseList({
       </ul>
     </section>
   );
-}
-
-function errorMessage(caught: unknown): string {
-  if (caught instanceof ConvexError) {
-    return typeof caught.data === "string"
-      ? caught.data
-      : "Could not save the expense.";
-  }
-  if (caught instanceof Error && caught.message.trim() !== "") {
-    return caught.message;
-  }
-  return "Could not save the expense.";
 }

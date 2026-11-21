@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { frequencyValidator } from "./incomeFrequency";
 
 // The schema is entirely optional.
 // You can delete this file (schema.ts) and the
@@ -20,4 +21,11 @@ export default defineSchema({
     month: v.string(),
     amountCents: v.number(),
   }).index("by_month", ["month"]),
+  // amountCents is what one payment is worth; the monthly total is derived
+  // from it and the frequency (see incomeFrequency.ts), never stored.
+  incomeStreams: defineTable({
+    name: v.string(),
+    amountCents: v.number(),
+    frequency: frequencyValidator,
+  }),
 });
