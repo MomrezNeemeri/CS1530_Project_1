@@ -95,6 +95,13 @@ export const listExpenses = query({
   },
 });
 
+export const deleteExpense = mutation({
+  args: { expenseId: v.id("expenses") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete("expenses", args.expenseId);
+  },
+});
+
 export const addExpense = mutation({
   args: {
     amountCents: v.number(),
