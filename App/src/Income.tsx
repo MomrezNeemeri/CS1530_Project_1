@@ -1,12 +1,13 @@
 import { useMutation, useQuery } from "convex/react";
 import { FormEvent, useState } from "react";
 import { api } from "../convex/_generated/api";
+import { Id } from "../convex/_generated/dataModel";
 import {
   INCOME_FREQUENCIES,
   IncomeFrequency,
 } from "../convex/incomeFrequency";
 import { errorMessage } from "./errors";
-import { formatCents, parseAmountToCents } from "./money";
+import { centsToAmountInput, formatCents, parseAmountToCents } from "./money";
 
 const FREQUENCY_LABELS: Record<IncomeFrequency, string> = {
   weekly: "Weekly",
@@ -18,11 +19,26 @@ const INPUT_CLASS =
   "rounded-md border-2 border-slate-300 bg-light px-3 py-2 text-dark dark:border-slate-700 dark:bg-dark dark:text-light";
 const BUTTON_CLASS =
   "bg-dark dark:bg-light text-light dark:text-dark text-sm px-4 py-2 rounded-md border-2 disabled:opacity-60";
+const SECONDARY_BUTTON_CLASS =
+  "text-sm px-4 py-2 rounded-md border-2 border-slate-300 dark:border-slate-700 disabled:opacity-60";
 const MUTED_TEXT_CLASS = "text-sm text-slate-600 dark:text-slate-300";
+
+// What the form hands back once the inputs have passed validation.
+type IncomeValues = {
+  name: string;
+  amountCents: number;
+  frequency: IncomeFrequency;
+};
+
+type IncomeStream = IncomeValues & {
+  _id: Id<"incomeStreams">;
+  monthlyCents: number;
+};
 
 // The whole income area: monthly total, the add form, and the list.
 export function IncomeSection() {
   const income = useQuery(api.incomeStreams.listIncomeStreams);
+  const addIncomeStream = useMutation(api.incomeStreams.addIncomeStream);
   const [formOpen, setFormOpen] = useState(false);
 
   return (
@@ -45,21 +61,49 @@ export function IncomeSection() {
           Add Income
         </button>
       </div>
-      {formOpen ? <AddIncomeForm /> : null}
+      {formOpen ? (
+        <IncomeForm
+          title="Add Income"
+          submitLabel="Confirm"
+          errorId="income-error"
+          onSave={async (values) => {
+            await addIncomeStream(values);
+          }}
+        />
+      ) : null}
       <IncomeList streams={income?.streams} />
     </section>
   );
 }
 
-function AddIncomeForm() {
-  const addIncomeStream = useMutation(api.incomeStreams.addIncomeStream);
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [frequency, setFrequency] = useState<IncomeFrequency>("weekly");
+// One form for both adding and editing. `initial` pre-fills the fields when
+// editing; `onCancel` adds a Cancel button.
+function IncomeForm({
+  title,
+  submitLabel,
+  errorId,
+  initial,
+  onSave,
+  onCancel,
+}: {
+  title: string;
+  submitLabel: string;
+  errorId: string;
+  initial?: IncomeValues;
+  onSave: (values: IncomeValues) => Promise<void>;
+  onCancel?: () => void;
+}) {
+  const initialName = initial?.name ?? "";
+  const initialAmount = initial ? centsToAmountInput(initial.amountCents) : "";
+  const initialFrequency = initial?.frequency ?? "weekly";
+
+  const [name, setName] = useState(initialName);
+  const [amount, setAmount] = useState(initialAmount);
+  const [frequency, setFrequency] = useState<IncomeFrequency>(initialFrequency);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  async function onConfirm(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (name.trim() === "") {
       setError("Name is required.");
@@ -74,10 +118,10 @@ function AddIncomeForm() {
     setSaving(true);
     setError(null);
     try {
-      await addIncomeStream({ name: name.trim(), amountCents, frequency });
-      setName("");
-      setAmount("");
-      setFrequency("weekly");
+      await onSave({ name: name.trim(), amountCents, frequency });
+      setName(initialName);
+      setAmount(initialAmount);
+      setFrequency(initialFrequency);
     } catch (caught) {
       setError(errorMessage(caught, "Could not save the income stream."));
     } finally {
@@ -89,11 +133,11 @@ function AddIncomeForm() {
     <form
       className="flex flex-col gap-4 rounded-md border-2 border-slate-200 p-4 dark:border-slate-800"
       onSubmit={(event) => {
-        void onConfirm(event);
+        void onSubmit(event);
       }}
       noValidate
     >
-      <h3 className="text-lg font-bold">Add Income</h3>
+      <h3 className="text-lg font-bold">{title}</h3>
       <label className="flex flex-col gap-1 text-sm">
         Name
         <input
@@ -101,7 +145,7 @@ function AddIncomeForm() {
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="Campus job"
-          aria-describedby={error ? "income-error" : undefined}
+          aria-describedby={error ? errorId : undefined}
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -112,7 +156,7 @@ function AddIncomeForm() {
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
           placeholder="250.00"
-          aria-describedby={error ? "income-error" : undefined}
+          aria-describedby={error ? errorId : undefined}
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -133,35 +177,37 @@ function AddIncomeForm() {
       </label>
       {error ? (
         <p
-          id="income-error"
+          id={errorId}
           role="alert"
           className="text-sm text-red-600 dark:text-red-400"
         >
           {error}
         </p>
       ) : null}
-      <div>
+      <div className="flex gap-2">
         <button type="submit" disabled={saving} className={BUTTON_CLASS}>
-          Confirm
+          {submitLabel}
         </button>
+        {onCancel ? (
+          <button
+            type="button"
+            disabled={saving}
+            className={SECONDARY_BUTTON_CLASS}
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        ) : null}
       </div>
     </form>
   );
 }
 
-function IncomeList({
-  streams,
-}: {
-  streams:
-    | {
-        _id: string;
-        name: string;
-        amountCents: number;
-        frequency: IncomeFrequency;
-        monthlyCents: number;
-      }[]
-    | undefined;
-}) {
+function IncomeList({ streams }: { streams: IncomeStream[] | undefined }) {
+  const updateIncomeStream = useMutation(api.incomeStreams.updateIncomeStream);
+  // The stream currently being edited, if any. Only one at a time.
+  const [editingId, setEditingId] = useState<Id<"incomeStreams"> | null>(null);
+
   if (streams === undefined) {
     return <p>Loading income…</p>;
   }
@@ -174,21 +220,49 @@ function IncomeList({
   }
   return (
     <ul className="flex flex-col gap-2">
-      {streams.map((stream) => (
-        <li
-          key={stream._id}
-          className="flex items-start justify-between gap-4 rounded-md border-2 border-slate-200 px-4 py-3 dark:border-slate-800"
-        >
-          <div>
-            <p className="font-bold">{stream.name}</p>
-            <p className={MUTED_TEXT_CLASS}>
-              {formatCents(stream.amountCents)}{" "}
-              {FREQUENCY_LABELS[stream.frequency].toLowerCase()}
-            </p>
-          </div>
-          <p className="font-bold">{formatCents(stream.monthlyCents)} / month</p>
-        </li>
-      ))}
+      {streams.map((stream) =>
+        stream._id === editingId ? (
+          <li key={stream._id}>
+            <IncomeForm
+              title="Edit Income"
+              submitLabel="Save"
+              errorId="income-edit-error"
+              initial={stream}
+              onSave={async (values) => {
+                await updateIncomeStream({ id: stream._id, ...values });
+                setEditingId(null);
+              }}
+              onCancel={() => setEditingId(null)}
+            />
+          </li>
+        ) : (
+          <li
+            key={stream._id}
+            className="flex items-start justify-between gap-4 rounded-md border-2 border-slate-200 px-4 py-3 dark:border-slate-800"
+          >
+            <div>
+              <p className="font-bold">{stream.name}</p>
+              <p className={MUTED_TEXT_CLASS}>
+                {formatCents(stream.amountCents)}{" "}
+                {FREQUENCY_LABELS[stream.frequency].toLowerCase()}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="font-bold">
+                {formatCents(stream.monthlyCents)} / month
+              </p>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                aria-label={`Edit ${stream.name}`}
+                onClick={() => setEditingId(stream._id)}
+              >
+                Edit
+              </button>
+            </div>
+          </li>
+        ),
+      )}
     </ul>
   );
 }
