@@ -11,6 +11,8 @@ import {
   parseAmountToCents,
   todayLocal,
 } from "./money";
+import type { Id } from "../convex/_generated/dataModel";
+import { EditExpenseForm, type Expense } from "./EditExpenseForm";
 
 export default function App() {
   const month = currentMonth();
@@ -222,17 +224,12 @@ function ExpenseList({
   expenses,
   loading,
 }: {
-  expenses:
-    | {
-        _id: string;
-        amountCents: number;
-        category: string;
-        date: string;
-        location: string | null;
-      }[]
-    | undefined;
+  expenses: Expense[] | undefined;
   loading: boolean;
 }) {
+  // Which expense is open in the edit form. Only one at a time.
+  const [editingId, setEditingId] = useState<Id<"expenses"> | null>(null);
+
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-xl font-bold">Expenses</h2>
@@ -243,21 +240,40 @@ function ExpenseList({
         </p>
       ) : null}
       <ul className="flex flex-col gap-2">
-        {expenses?.map((expense) => (
-          <li
-            key={expense._id}
-            className="flex items-start justify-between gap-4 rounded-md border-2 border-slate-200 px-4 py-3 dark:border-slate-800"
-          >
-            <div>
-              <p className="font-bold">{expense.category}</p>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                {formatIsoDate(expense.date)}
-                {expense.location ? ` · ${expense.location}` : ""}
-              </p>
-            </div>
-            <p className="font-bold">{formatCents(expense.amountCents)}</p>
-          </li>
-        ))}
+        {expenses?.map((expense) =>
+          expense._id === editingId ? (
+            <li key={expense._id}>
+              <EditExpenseForm
+                expense={expense}
+                onDone={() => setEditingId(null)}
+              />
+            </li>
+          ) : (
+            <li
+              key={expense._id}
+              className="flex items-start justify-between gap-4 rounded-md border-2 border-slate-200 px-4 py-3 dark:border-slate-800"
+            >
+              <div>
+                <p className="font-bold">{expense.category}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  {formatIsoDate(expense.date)}
+                  {expense.location ? ` · ${expense.location}` : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="font-bold">{formatCents(expense.amountCents)}</p>
+                <button
+                  type="button"
+                  className="text-sm px-3 py-1 rounded-md border-2 border-slate-300 dark:border-slate-700"
+                  onClick={() => setEditingId(expense._id)}
+                  aria-label={`Edit ${expense.category} expense`}
+                >
+                  Edit
+                </button>
+              </div>
+            </li>
+          ),
+        )}
       </ul>
     </section>
   );

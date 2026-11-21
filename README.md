@@ -25,6 +25,8 @@ We plan to build a personal finance and budgeting application designed specifica
 
 Implemented features:
 
+Edit an expense. In the Expenses list, click Edit next to an expense. The row turns into a form that already holds the current amount, category, date, and location. Change any field and click Save. The same rules as Add apply: the amount must be a positive number, a category must be picked, and the date must be a real date. Clear the location box to remove the location. After saving, the list, Spent this month, and Remaining update right away; moving an expense to a different month takes it out of this month's totals. Click Cancel to close the form without changing anything.
+
 Add an expense. On the main page, click Add Expense. Enter a positive amount and choose a category (Food, Transportation, Entertainment, Housing, School, or Other). Date and location are optional; leave the date blank and it is saved as today. Click Confirm. The expense shows up in the list. Spent this month and remaining budget update right away. Remaining budget is this month's budget minus this month's expenses. No monthly budget is set yet, so the budget stays $0.00 and remaining goes down as you add expenses. An expense dated in another month still appears in the list and does not change this month's totals.
 
 Currently: Add an expense works on the Convex backend with the Vite app. Setting a monthly budget, editing, and deleting are not built yet.
