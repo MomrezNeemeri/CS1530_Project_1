@@ -33,7 +33,7 @@ Add an income stream. On the main page, under Income, click Add Income. Enter a 
 
 Edit an income stream. Each stream in the income list has an Edit button. Click it and the stream turns into a form with its current name, amount, and frequency filled in. Change any of them and click Save; the stream and Total monthly income update right away. Click Cancel to close the form and leave the stream as it was. The same rules as adding apply: a missing name or an amount that is not a positive number shows an error and nothing is saved.
 
-Currently: Add an expense, add an income stream, and edit an income stream work on the Convex backend with the Vite app. Setting a monthly budget, editing or deleting an expense, and deleting an income stream are not built yet.
+Currently: Adding, editing, and deleting an expense, and adding and editing an income stream, work on the Convex backend with the Vite app. Setting a monthly budget and deleting an income stream are not built yet.
 
 AI was used in the generation of code. 
 

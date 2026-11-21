@@ -13,7 +13,6 @@ import {
   parseAmountToCents,
   todayLocal,
 } from "./money";
-import type { Id } from "../convex/_generated/dataModel";
 import { EditExpenseForm, type Expense } from "./EditExpenseForm";
 
 export default function App() {
@@ -230,24 +229,13 @@ function ExpenseList({
   expenses: Expense[] | undefined;
   loading: boolean;
 }) {
-  // Which expense is open in the edit form. Only one at a time.
-  const [editingId, setEditingId] = useState<Id<"expenses"> | null>(null);
-  expenses:
-    | {
-        _id: Id<"expenses">;
-        amountCents: number;
-        category: string;
-        date: string;
-        location: string | null;
-      }[]
-    | undefined;
-  loading: boolean;
-}) {
   const deleteExpense = useMutation(api.expenses.deleteExpense);
   const [deletingId, setDeletingId] = useState<Id<"expenses"> | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  // US2: which expense is open in the edit form. Only one at a time.
+  const [editingId, setEditingId] = useState<Id<"expenses"> | null>(null);
 
-  async function onDelete(expense: NonNullable<typeof expenses>[number]) {
+  async function onDelete(expense: Expense) {
     if (deletingId !== null || !window.confirm(
       `Delete ${expense.category} expense of ${formatCents(expense.amountCents)} on ${formatIsoDate(expense.date)}?`,
     )) {
@@ -300,45 +288,31 @@ function ExpenseList({
                   {expense.location ? ` · ${expense.location}` : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col items-end gap-2">
                 <p className="font-bold">{formatCents(expense.amountCents)}</p>
-                <button
-                  type="button"
-                  className="text-sm px-3 py-1 rounded-md border-2 border-slate-300 dark:border-slate-700"
-                  onClick={() => setEditingId(expense._id)}
-                  aria-label={`Edit ${expense.category} expense`}
-                >
-                  Edit
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={deletingId !== null}
+                    className="text-sm px-4 py-2 rounded-md border-2 border-slate-300 dark:border-slate-700 disabled:opacity-60"
+                    onClick={() => setEditingId(expense._id)}
+                    aria-label={`Edit ${expense.category} expense`}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deletingId !== null}
+                    className="bg-dark dark:bg-light text-light dark:text-dark text-sm px-4 py-2 rounded-md border-2 disabled:opacity-60"
+                    onClick={() => { void onDelete(expense); }}
+                  >
+                    {deletingId === expense._id ? "Deleting…" : "Delete"}
+                  </button>
+                </div>
               </div>
             </li>
           ),
         )}
-        {expenses?.map((expense) => (
-          <li
-            key={expense._id}
-            className="flex items-start justify-between gap-4 rounded-md border-2 border-slate-200 px-4 py-3 dark:border-slate-800"
-          >
-            <div>
-              <p className="font-bold">{expense.category}</p>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                {formatIsoDate(expense.date)}
-                {expense.location ? ` · ${expense.location}` : ""}
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <p className="font-bold">{formatCents(expense.amountCents)}</p>
-              <button
-                type="button"
-                disabled={deletingId !== null}
-                className="bg-dark dark:bg-light text-light dark:text-dark text-sm px-4 py-2 rounded-md border-2 disabled:opacity-60"
-                onClick={() => { void onDelete(expense); }}
-              >
-                {deletingId === expense._id ? "Deleting…" : "Delete"}
-              </button>
-            </div>
-          </li>
-        ))}
       </ul>
     </section>
   );
