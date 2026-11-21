@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCents, parseAmountToCents } from "./money";
+import { centsToAmountInput, formatCents, parseAmountToCents } from "./money";
 
 describe("parseAmountToCents", () => {
   it("converts a dollar string into cents", () => {
@@ -12,6 +12,18 @@ describe("parseAmountToCents", () => {
     expect(parseAmountToCents("0")).toBeNull();
     expect(parseAmountToCents("-1")).toBeNull();
     expect(parseAmountToCents("12.345")).toBeNull();
+  });
+});
+
+describe("centsToAmountInput", () => {
+  it("prints cents as a plain dollar amount for an input box", () => {
+    expect(centsToAmountInput(125050)).toBe("1250.50");
+    expect(centsToAmountInput(5)).toBe("0.05");
+    expect(centsToAmountInput(1000)).toBe("10.00");
+  });
+
+  it("round-trips through parseAmountToCents", () => {
+    expect(parseAmountToCents(centsToAmountInput(43333))).toBe(43333);
   });
 });
 

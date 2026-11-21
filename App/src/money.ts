@@ -37,6 +37,14 @@ export function parseAmountToCents(raw: string): number | null {
   return cents;
 }
 
+// The reverse of parseAmountToCents: 125050 becomes "1250.50". Used to
+// pre-fill an amount box when editing.
+export function centsToAmountInput(cents: number): string {
+  const dollars = Math.floor(cents / 100);
+  const remainder = String(cents % 100).padStart(2, "0");
+  return `${dollars}.${remainder}`;
+}
+
 export function formatCents(cents: number): string {
   const sign = cents < 0 ? "-" : "";
   const absolute = Math.abs(cents);

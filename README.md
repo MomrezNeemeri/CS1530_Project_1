@@ -29,7 +29,9 @@ Add an expense. On the main page, click Add Expense. Enter a positive amount and
 
 Add an income stream. On the main page, under Income, click Add Income. Enter a name, a positive amount per paycheck, and how often it is paid (weekly, biweekly, or monthly). Click Confirm. The stream shows up in the income list with its monthly equivalent, and Total monthly income updates right away. Weekly pay is converted with 52 paychecks a year (amount × 52 ÷ 12) and biweekly pay with 26 (amount × 26 ÷ 12), rounded to the cent; monthly pay is used as entered. A missing name or an amount that is not a positive number shows an error and nothing is saved.
 
-Currently: Add an expense and add an income stream work on the Convex backend with the Vite app. Setting a monthly budget, editing, and deleting are not built yet.
+Edit an income stream. Each stream in the income list has an Edit button. Click it and the stream turns into a form with its current name, amount, and frequency filled in. Change any of them and click Save; the stream and Total monthly income update right away. Click Cancel to close the form and leave the stream as it was. The same rules as adding apply: a missing name or an amount that is not a positive number shows an error and nothing is saved.
+
+Currently: Add an expense, add an income stream, and edit an income stream work on the Convex backend with the Vite app. Setting a monthly budget, editing or deleting an expense, and deleting an income stream are not built yet.
 
 AI was used in the generation of code. 
 
