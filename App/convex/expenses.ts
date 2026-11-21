@@ -95,6 +95,40 @@ export const listExpenses = query({
   },
 });
 
+// Shared by addExpense and updateExpense so both follow the same rules (US2).
+// Returns the cleaned fields to save, or throws a ConvexError the form shows.
+export function validateExpenseInput(input: {
+  amountCents: number;
+  category: string;
+  date?: string;
+  location?: string;
+}): {
+  amountCents: number;
+  category: string;
+  date: string;
+  location: string | null;
+} {
+  if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0) {
+    throw new ConvexError("Amount must be a positive number.");
+  }
+  if (!isCategory(input.category)) {
+    throw new ConvexError("Category is required.");
+  }
+
+  const date = input.date?.trim() ?? "";
+  if (date.length === 0 || !isIsoDate(date)) {
+    throw new ConvexError("Date must be a valid calendar date.");
+  }
+
+  const location = input.location?.trim() ?? "";
+  return {
+    amountCents: input.amountCents,
+    category: input.category,
+    date,
+    location: location.length > 0 ? location : null,
+  };
+}
+
 export const deleteExpense = mutation({
   args: { expenseId: v.id("expenses") },
   handler: async (ctx, args) => {
@@ -110,27 +144,27 @@ export const addExpense = mutation({
     location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (
-      !Number.isSafeInteger(args.amountCents) ||
-      args.amountCents <= 0
-    ) {
-      throw new ConvexError("Amount must be a positive number.");
-    }
-    if (!isCategory(args.category)) {
-      throw new ConvexError("Category is required.");
-    }
+    await ctx.db.insert("expenses", validateExpenseInput(args));
+  },
+});
 
-    const date = args.date?.trim() ?? "";
-    if (date.length === 0 || !isIsoDate(date)) {
-      throw new ConvexError("Date must be a valid calendar date.");
+// US2: Edit an Expense. Overwrites every field of an existing expense.
+// A blank location clears it. Totals come from listExpenses, so they
+// recalculate on their own once this saves.
+export const updateExpense = mutation({
+  args: {
+    id: v.id("expenses"),
+    amountCents: v.number(),
+    category: v.string(),
+    date: v.optional(v.string()),
+    location: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get("expenses", args.id);
+    if (existing === null) {
+      throw new ConvexError("This expense no longer exists.");
     }
-
-    const location = args.location?.trim() ?? "";
-    await ctx.db.insert("expenses", {
-      amountCents: args.amountCents,
-      category: args.category,
-      date,
-      location: location.length > 0 ? location : null,
-    });
+    const { id, ...fields } = args;
+    await ctx.db.patch("expenses", id, validateExpenseInput(fields));
   },
 });
